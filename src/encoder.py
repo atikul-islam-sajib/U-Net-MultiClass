@@ -98,6 +98,23 @@ class Encoder(nn.Module):
     def forward(self, x):
         return self.model(x) if x is not None else None
 
+    @staticmethod
+    def total_params(model):
+        """
+        Calculates the total number of parameters in a given PyTorch model.
+
+        This function iterates over all parameters in the model, counting the total number of
+        elements (i.e., the product of the size of each dimension of the parameter). It is useful for
+        getting a quick understanding of the model's complexity and size.
+
+        Parameters:
+        - model (torch.nn.Module): The PyTorch model whose parameters are to be counted.
+
+        Returns:
+        - int: The total number of parameters in the model.
+        """
+        return sum(params.numel() for params in model.parameters())
+
 
 if __name__ == "__main__":
     parser = parser = argparse.ArgumentParser(
