@@ -5,6 +5,7 @@ import os
 import zipfile
 import cv2
 from PIL import Image
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -19,7 +20,7 @@ logging.basicConfig(
 sys.path.append("src/")
 
 from config import RAW_PATH, PROCESSED_PATH
-from utils import dump
+from utils import dump, load
 
 
 class Loader:
@@ -126,6 +127,35 @@ class Loader:
         except ValueError as e:
             print("Exception caught in the section - {}".format(e).capitalize())
 
+    @staticmethod
+    def show_images():
+        plt.figure(figsize=(30, 20))
+
+        if os.path.exists(PROCESSED_PATH):
+            val_images, val_masks = next(
+                iter(load(os.path.join(PROCESSED_PATH, "val_dataloader.pkl")))
+            )
+            for index, image in enumerate(val_images):
+                plt.subplot(2 * 4, 2 * 6, 2 * index + 1)
+                image = image.permute(1, 2, 0)
+                image = (image - image.min()) / (image.max() - image.min())
+                plt.imshow(image)
+                plt.title("Image")
+                plt.axis("off")
+
+                plt.subplot(2 * 4, 2 * 6, 2 * index + 2)
+                masks = val_masks[index].permute(1, 2, 0)
+                masks = (masks - masks.min()) / (masks.max() - masks.min())
+                plt.imshow(masks, cmap="gray")
+                plt.title("Mask")
+                plt.axis("off")
+
+            plt.tight_layout()
+            plt.show()
+
+        else:
+            raise Exception("Processed data folder not found".capitalize())
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data Loader for U-Net".title())
@@ -141,8 +171,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.image_path and args.batch_size:
+        logging.info("Data Loader started".capitalize())
+
         loader = Loader(image_path=args.image_path, batch_size=args.batch_size)
         loader.unzip_folder()
         loader.create_dataloader()
+
+        logging.info("Data Loader completed".capitalize())
+
+        loader.show_images()
     else:
         raise Exception("Invalid arguments".capitalize())
