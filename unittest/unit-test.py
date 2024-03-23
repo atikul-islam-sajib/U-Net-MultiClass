@@ -5,8 +5,7 @@ import unittest
 import torch
 
 logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     filemode="w",
     filename="unit-test.log",
@@ -14,8 +13,11 @@ logging.basicConfig(
 
 sys.path.append("src/")
 
-from src.utils import load
-from src.config import RAW_PATH, PROCESSED_PATH
+from utils import load
+from config import RAW_PATH, PROCESSED_PATH
+from UNet import UNet
+from encoder import Encoder
+from decoder import Decoder
 
 
 class UnitTest(unittest.TestCase):
@@ -35,6 +37,9 @@ class UnitTest(unittest.TestCase):
         self.test_dataloader = load(
             os.path.join(PROCESSED_PATH, "test_data_loader.pkl")
         )
+        self.encoder = Encoder(in_channels=3, out_channels=64)
+        self.decoder = Decoder(in_channels=1024, out_channels=512)
+        self.model = UNet()
 
     def test_train_dataset_size(self):
         """
@@ -65,3 +70,24 @@ class UnitTest(unittest.TestCase):
         Test that the total number of samples in the validation dataset is as expected.
         """
         self.assertEqual(sum(data.size(0) for data in self.test_dataloader), 3256)
+
+    def test_total_params(self):
+        self.assertEqual(
+            sum(params.numel() for params in self.model.parameters()), 31037633
+        )
+
+    def test_encoder_block(self):
+        noise_data = torch.randn(64, 3, 256, 256)
+        self.assertEqual(self.encoder(noise_data).shape, torch.Size([64, 64, 256, 256]))
+
+    def test_decoder_block(self):
+        noise_data = torch.randn(64, 1024, 16, 16)
+        skip_info = torch.randn(64, 512, 32, 32)
+        self.assertEqual(
+            self.decoder(noise_data, skip_info).shape,
+            torch.Size([64, 1024, 32, 32]),
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
