@@ -72,15 +72,28 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(sum(data.size(0) for data in self.test_dataloader), 3256)
 
     def test_total_params(self):
+        """
+        Test that the total number of trainable parameters in the model is as expected.
+        This helps ensure the model architecture has not inadvertently changed.
+        """
         self.assertEqual(
             sum(params.numel() for params in self.model.parameters()), 31037633
         )
 
     def test_encoder_block(self):
+        """
+        Test that the encoder block of the model produces output of the expected shape
+        when fed with random noise input. This verifies the encoder's functionality and output dimensions.
+        """
         noise_data = torch.randn(64, 3, 256, 256)
         self.assertEqual(self.encoder(noise_data).shape, torch.Size([64, 64, 256, 256]))
 
     def test_decoder_block(self):
+        """
+        Test that the decoder block of the model, when given random noise input and
+        skip connection information, produces output of the expected shape. This checks
+        the decoder's integration and functionality with respect to handling inputs and skip connections.
+        """
         noise_data = torch.randn(64, 1024, 16, 16)
         skip_info = torch.randn(64, 512, 32, 32)
         self.assertEqual(
