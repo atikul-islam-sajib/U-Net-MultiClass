@@ -125,3 +125,24 @@ class Loader:
 
         except ValueError as e:
             print("Exception caught in the section - {}".format(e).capitalize())
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Data Loader for U-Net".title())
+    parser.add_argument(
+        "--image_path", type=str, help="Path to the zip file".capitalize()
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=4,
+        help="Batch size for the dataloader".capitalize(),
+    )
+    args = parser.parse_args()
+
+    if args.image_path and args.batch_size:
+        loader = Loader(image_path=args.image_path, batch_size=args.batch_size)
+        loader.unzip_folder()
+        loader.create_dataloader()
+    else:
+        raise Exception("Invalid arguments".capitalize())
