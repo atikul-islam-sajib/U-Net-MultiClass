@@ -24,6 +24,49 @@ from utils import dump, load
 
 
 class Loader:
+    """
+    A class for loading, processing, and creating DataLoader objects for segmented image datasets.
+
+    | Attributes      | Description                                           |
+    |-----------------|-------------------------------------------------------|
+    | image_path      | Path to the zip file containing the dataset.         |
+    | batch_size      | The size of batches to use when creating DataLoaders. |
+    | base_images     | List to store base images after processing.           |
+    | mask_images     | List to store mask images after processing.           |
+
+    | Parameters      | Type  | Description                                      |
+    |-----------------|-------|--------------------------------------------------|
+    | image_path      | str   | Path to the zip file containing the dataset.     |
+    | batch_size      | int   | The size of batches to use when creating DataLoaders. |
+
+
+    ## Usage:
+
+    ### From the Command Line:
+
+    To use this script from the command line, navigate to the directory containing the script and execute it with the required arguments. For example:
+
+    ```
+    python loader_script.py --image_path /path/to/your/dataset.zip --batch_size 4
+    ```
+
+    ### From the Modules:
+    ```
+    # Initialize the Loader with the path to your dataset zip file and the desired batch size
+    loader = Loader(image_path='/path/to/your/dataset.zip', batch_size=4)
+
+    # Unzip the dataset
+    loader.unzip_folder()
+
+    # Process the segmented data and create DataLoader objects
+    loader.create_dataloader()
+
+    # Optionally, you can display images from the validation set
+    loader.show_images()
+    ```
+
+    """
+
     def __init__(self, image_path=None, batch_size=4):
         self.image_path = image_path
         self.batch_size = batch_size
@@ -31,6 +74,13 @@ class Loader:
         self.mask_images = list()
 
     def base_transforms(self):
+        """
+        Defines and returns a torchvision transforms pipeline for processing base images.
+
+        | Returns         | Description                                     |
+        |-----------------|-------------------------------------------------|
+        | transforms.Compose | A composition of image transformations for base images. |
+        """
         return transforms.Compose(
             [
                 transforms.Resize((256, 256)),
@@ -40,6 +90,13 @@ class Loader:
         )
 
     def mask_transforms(self):
+        """
+        Defines and returns a torchvision transforms pipeline for processing mask images.
+
+        | Returns         | Description                                      |
+        |-----------------|--------------------------------------------------|
+        | transforms.Compose | A composition of image transformations for mask images. |
+        """
         return transforms.Compose(
             [
                 transforms.Resize((256, 256)),
@@ -50,6 +107,13 @@ class Loader:
         )
 
     def unzip_folder(self):
+        """
+        Extracts the dataset from a zip file into the RAW_PATH directory.
+
+        | Exceptions      | Description                                      |
+        |-----------------|--------------------------------------------------|
+        | Exception       | Raised if the RAW_PATH directory does not exist. |
+        """
         if os.path.exists(RAW_PATH):
             with zipfile.ZipFile(self.image_path, "r") as zip_ref:
                 zip_ref.extractall(os.path.join(RAW_PATH, "segmented"))
@@ -57,6 +121,17 @@ class Loader:
             raise Exception("Raw data folder not found".capitalize())
 
     def process_segmented_data(self):
+        """
+        Processes segmented images and masks, loading them into memory after applying necessary transformations.
+
+        | Returns         | Description                                      |
+        |-----------------|--------------------------------------------------|
+        | tuple           | A tuple containing lists of processed base images and masks. |
+
+        | Exceptions      | Description                                                  |
+        |-----------------|--------------------------------------------------------------|
+        | Exception       | Raised if the segmented data folder is not found in RAW_PATH. |
+        """
         if os.path.join(RAW_PATH, "segmented"):
             self.images_directory = os.path.join(RAW_PATH, "segmented")
 
@@ -97,6 +172,13 @@ class Loader:
             )
 
     def create_dataloader(self):
+        """
+        Creates training and validation DataLoader objects from processed images and masks.
+
+        | Exceptions      | Description                                         |
+        |-----------------|-----------------------------------------------------|
+        | Exception       | Raised if the PROCESSED_PATH directory does not exist or if any error occurs during DataLoader creation. |
+        """
         images, masks = self.process_segmented_data()
         data_split = train_test_split(images, masks, test_size=0.30, random_state=42)
 
@@ -129,6 +211,13 @@ class Loader:
 
     @staticmethod
     def show_images():
+        """
+        Displays a set of images and masks from the validation DataLoader.
+
+        | Exceptions      | Description                                         |
+        |-----------------|-----------------------------------------------------|
+        | Exception       | Raised if the PROCESSED_PATH directory does not exist. |
+        """
         plt.figure(figsize=(30, 20))
 
         if os.path.exists(PROCESSED_PATH):
@@ -158,6 +247,20 @@ class Loader:
 
 
 if __name__ == "__main__":
+    """
+    Entry point for the script. Parses command-line arguments to initialize a Loader instance and process the dataset.
+
+    | Parameters      | Type  | Description                                      |
+    |-----------------|-------|--------------------------------------------------|
+    | --image_path    | str   | Path to the zip file containing the dataset.     |
+    | --batch_size    | int   | The size of batches to use when creating DataLoaders. |
+
+    To use this script from the command line, navigate to the directory containing the script and execute it with the required arguments. For example:
+
+    ```
+    python loader_script.py --image_path /path/to/your/dataset.zip --batch_size 4
+    ```
+    """
     parser = argparse.ArgumentParser(description="Data Loader for U-Net".title())
     parser.add_argument(
         "--image_path", type=str, help="Path to the zip file".capitalize()
