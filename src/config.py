@@ -1,3 +1,10 @@
 # Config file
 RAW_PATH = "./data/raw"
 PROCESSED_PATH = "./data/processed"
+TRAIN_CHECKPOINT_PATH = "./checkpoints/train_models/"
+TEST_CHECKPOINT_PATH = "./checkpoints/best_model/"
+TRAIN_IMAGES_PATH = "./outputs/train_images/"
+TEST_IMAGE_PATH = "./outputs/test_images/"
+BEST_MODEL_PATH = "./checkpoints/best_model/"
+GIF_PATH = "./outputs/train_gif/"
+METRICS_PATH = "./metrics/"
