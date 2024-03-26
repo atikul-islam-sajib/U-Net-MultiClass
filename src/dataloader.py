@@ -86,7 +86,7 @@ class Loader:
         """
         return transforms.Compose(
             [
-                transforms.Resize((256, 256)),
+                transforms.Resize((self.image_size, self.image_size)),
                 transforms.ToTensor(),
                 transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
             ]
