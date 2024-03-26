@@ -67,9 +67,12 @@ class Loader:
 
     """
 
-    def __init__(self, image_path=None, batch_size=4):
+    def __init__(self, image_path=None, image_size=256, batch_size=4, split_ratio=0.25):
         self.image_path = image_path
+        self.image_size = image_size
         self.batch_size = batch_size
+        self.split_ratio = split_ratio
+
         self.base_images = list()
         self.mask_images = list()
 
@@ -132,6 +135,7 @@ class Loader:
         |-----------------|--------------------------------------------------------------|
         | Exception       | Raised if the segmented data folder is not found in RAW_PATH. |
         """
+
         if os.path.join(RAW_PATH, "segmented"):
             self.images_directory = os.path.join(RAW_PATH, "segmented")
 
@@ -180,7 +184,9 @@ class Loader:
         | Exception       | Raised if the PROCESSED_PATH directory does not exist or if any error occurs during DataLoader creation. |
         """
         images, masks = self.process_segmented_data()
-        data_split = train_test_split(images, masks, test_size=0.30, random_state=42)
+        data_split = train_test_split(
+            images, masks, test_size=self.split_ratio, random_state=42
+        )
 
         train_dataloader = DataLoader(
             dataset=list(zip(data_split[0], data_split[2])),
@@ -201,7 +207,7 @@ class Loader:
                 )
                 dump(
                     value=val_dataloader,
-                    filename=os.path.join(PROCESSED_PATH, "val_dataloader.pkl"),
+                    filename=os.path.join(PROCESSED_PATH, "test_dataloader.pkl"),
                 )
             else:
                 raise Exception("Processed data folder not found".capitalize())
@@ -222,8 +228,11 @@ class Loader:
 
         if os.path.exists(PROCESSED_PATH):
             val_images, val_masks = next(
-                iter(load(os.path.join(PROCESSED_PATH, "val_dataloader.pkl")))
+                iter(load(filename="../../data/processed/test_dataloader.pkl"))
             )
+
+            plt.figure(figsize=(30, 20))
+
             for index, image in enumerate(val_images):
                 plt.subplot(2 * 4, 2 * 6, 2 * index + 1)
                 image = image.permute(1, 2, 0)
@@ -271,12 +280,22 @@ if __name__ == "__main__":
         default=4,
         help="Batch size for the dataloader".capitalize(),
     )
+    parser.add_argument(
+        "--split_ratio",
+        type=float,
+        default=0.25,
+        help="Split the dataset into train and test sets".capitalize(),
+    )
     args = parser.parse_args()
 
-    if args.image_path and args.batch_size:
+    if args.image_path and args.batch_size and args.split_ratio:
         logging.info("Data Loader started".capitalize())
 
-        loader = Loader(image_path=args.image_path, batch_size=args.batch_size)
+        loader = Loader(
+            image_path=args.image_path,
+            batch_size=args.batch_size,
+            split_ratio=args.split_ratio,
+        )
         loader.unzip_folder()
         loader.create_dataloader()
 
