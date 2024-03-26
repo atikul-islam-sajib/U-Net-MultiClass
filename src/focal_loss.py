@@ -3,6 +3,7 @@ import logging
 import argparse
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,7 +72,7 @@ class FocalLoss(nn.Module):
         predicted = predicted.view(-1)
         actual = actual.view(-1)
 
-        BCE = nn.BCELoss(predicted, actual, reduction="mean")
+        BCE = F.binary_cross_entropy(predicted, actual)
         pt = torch.exp(-BCE)
 
         return self.alpha * (1 - pt) ** self.gamma * BCE

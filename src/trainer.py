@@ -22,6 +22,7 @@ from UNet import UNet
 from dice_loss import DiceLoss
 from tversky_loss import IoU
 from focal_loss import FocalLoss
+from dice_bce import DiceBCE
 
 
 class Trainer:
@@ -112,6 +113,8 @@ class Trainer:
             return IoU(smooth=self.smooth_value)
         elif self.loss == "focal":
             return FocalLoss(alpha=self.alpha, gamma=self.gamma)
+        elif self.loss == "dice_bce":
+            return DiceBCE(smooth=self.smooth_value)
         else:
             raise ValueError(
                 "Loss function not supported. Please choose from 'dice' or 'IoU'.".capitalize()
