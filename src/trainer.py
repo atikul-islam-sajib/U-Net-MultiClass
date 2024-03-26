@@ -21,6 +21,7 @@ from utils import load, dump, weight_init, define_device
 from UNet import UNet
 from dice_loss import DiceLoss
 from tversky_loss import IoU
+from focal_loss import FocalLoss
 
 
 class Trainer:
@@ -59,6 +60,8 @@ class Trainer:
         epochs=10,
         lr=0.0002,
         loss="dice",
+        alpha=0.25,
+        gamma=2,
         smooth_value=0.01,
         beta1=0.5,
         device="mps",
@@ -67,6 +70,8 @@ class Trainer:
         self.epochs = epochs
         self.lr = lr
         self.loss = loss
+        self.alpha = alpha
+        self.gamma = gamma
         self.smooth_value = smooth_value
         self.beta1 = beta1
         self.beta2 = 0.999
@@ -105,6 +110,8 @@ class Trainer:
             return DiceLoss(smooth=0.01)
         elif self.loss == "IoU":
             return IoU(smooth=self.smooth_value)
+        elif self.loss == "focal":
+            return FocalLoss(alpha=self.alpha, gamma=self.gamma)
         else:
             raise ValueError(
                 "Loss function not supported. Please choose from 'dice' or 'IoU'.".capitalize()
@@ -342,6 +349,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--smooth_value", type=float, default=0.01, help="Smooth value".capitalize()
     )
+    parser.add_argument(
+        "--alpha", type=float, default=0.5, help="Alpha value".capitalize()
+    )
+    parser.add_argument(
+        "--gamma", type=float, default=2, help="Gamma value".capitalize()
+    )
     parser.add_argument("--train", action="store_true", help="Train model".capitalize())
 
     args = parser.parse_args()
@@ -354,11 +367,15 @@ if __name__ == "__main__":
             and args.display
             and args.device
             and args.smooth_value
+            and args.alpha
+            and args.gamma
         ):
             trainer = Trainer(
                 epochs=args.epochs,
                 lr=args.lr,
                 loss=args.loss,
+                alpha=args.alpha,
+                gamma=args.gamma,
                 display=args.display,
                 device=args.device,
                 smooth_value=args.smooth_value,
