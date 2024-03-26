@@ -183,7 +183,7 @@ class Trainer:
                     self.model.state_dict(),
                     os.path.join(
                         TRAIN_CHECKPOINT_PATH,
-                        "model_{}.pth".format(kwargs["epoch"] + 1),
+                        "model_{}.pth".format(kwargs["epoch"]),
                     ),
                 )
         else:
