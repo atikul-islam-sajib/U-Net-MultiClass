@@ -23,6 +23,36 @@ from dice_loss import DiceLoss
 
 
 class Trainer:
+    """
+    A class responsible for training a U-Net model for image segmentation tasks.
+
+    Attributes:
+        epochs (int): Number of epochs to train the model.
+        lr (float): Learning rate for the optimizer.
+        loss (str): Name of the loss function to be used. Currently supports 'dice' loss.
+        smooth_value (float): Smoothing value for the Dice loss function to avoid division by zero.
+        beta1 (float): The exponential decay rate for the first moment estimates in optimizer.
+        device (str): Device on which to train the model (e.g., 'cpu', 'cuda', 'mps').
+        is_display (bool): Flag to display progress during training.
+        history (dict): A dictionary to record training and testing loss over epochs.
+
+    Methods:
+        __setup__(): Sets up the model, loss function, optimizer, and data loaders.
+        select_loss_function(): Selects the loss function based on the 'loss' attribute.
+        l1_loss(model, lambda_value=0.01): Calculates the L1 loss for regularization.
+        l2_loss(model, lambda_value=0.01): Calculates the L2 loss for regularization.
+        update_training_loss(**kwargs): Performs a single training step.
+        update_testing_loss(**kwargs): Evaluates the model on the test set.
+        saved_checkpoints(**kwargs): Saves model checkpoints during training.
+        show_progress(**kwargs): Prints or logs the training progress.
+        train(): Main method to run the training loop.
+        plot_loss_curves(): Static method to plot the training and testing loss curves.
+
+    Examples:
+        >>> trainer = Trainer(epochs=10, lr=0.001, loss='dice', device='cuda')
+        >>> trainer.train()
+    """
+
     def __init__(
         self,
         epochs=10,
@@ -64,20 +94,56 @@ class Trainer:
             )
 
     def select_loss_function(self):
+        """
+        Selects and returns the loss function based on the loss type specified during initialization.
+
+        Returns:
+            nn.Module: The loss function as a PyTorch module.
+        """
         if self.loss == "dice":
             return DiceLoss(smooth=0.01)
 
     def l1_loss(self, model, lambda_value=0.01):
+        """
+        Calculates the L1 regularization loss.
+
+        Parameters:
+            model (torch.nn.Module): The model whose weights are regularized.
+            lambda_value (float): Regularization coefficient.
+
+        Returns:
+            torch.Tensor: The L1 regularization loss.
+        """
         return lambda_value * sum(
             (torch.norm(input=params, p=1) for params in model.parameters())
         )
 
     def l2_loss(self, model, lambda_value=0.01):
+        """
+        Calculates the L2 regularization loss.
+
+        Parameters:
+            model (torch.nn.Module): The model whose weights are regularized.
+            lambda_value (float): Regularization coefficient.
+
+        Returns:
+            torch.Tensor: The L2 regularization loss.
+        """
         return lambda_value * sum(
             (torch.norm(input=params, p=2) for params in model.parameters())
         )
 
     def update_training_loss(self, **kwargs):
+        """
+        Updates the model's weights by performing a single step of training.
+
+        Parameters:
+            kwargs (dict): Contains 'images' and 'masks', both of type torch.Tensor, representing
+                           the input images and their corresponding ground truth masks.
+
+        Returns:
+            float: The training loss for the current step.
+        """
         self.optimizer.zero_grad()
 
         train_predicted_masks = self.model(kwargs["images"])
@@ -89,12 +155,28 @@ class Trainer:
         return train_predicted_loss.item()
 
     def update_testing_loss(self, **kwargs):
+        """
+        Computes the loss on the test dataset without updating the model's weights.
+
+        Parameters:
+            kwargs (dict): Contains 'images' and 'masks', both of type torch.Tensor, representing
+                           the input images and their corresponding ground truth masks.
+
+        Returns:
+            float: The testing loss for the current step.
+        """
         test_predicted_masks = self.model(kwargs["images"])
         test_predicted_loss = self.loss(test_predicted_masks, kwargs["masks"])
 
         return test_predicted_loss.item()
 
     def saved_checkpoints(self, **kwargs):
+        """
+        Saves the model's checkpoints at specified intervals.
+
+        Parameters:
+            kwargs (dict): Contains 'epoch', the current epoch during training.
+        """
         if kwargs["epoch"] != self.epochs:
             if os.path.exists(TRAIN_CHECKPOINT_PATH):
                 torch.save(
@@ -112,6 +194,13 @@ class Trainer:
                 )
 
     def show_progress(self, **kwargs):
+        """
+        Displays or logs the training progress, including the current epoch and loss.
+
+        Parameters:
+            kwargs (dict): Contains 'epoch', 'epochs', 'train_loss', and 'test_loss', detailing
+                           the current epoch, total epochs, training loss, and testing loss, respectively.
+        """
         if self.is_display == True:
             print(
                 "Epochs: [{}/{}] - train_loss: [{:.5f}] - test_loss: [{:.5f}]".format(
@@ -132,6 +221,10 @@ class Trainer:
             )
 
     def train(self):
+        """
+        The main method for training the model. It sets up the model, iterates over the dataset
+        for a given number of epochs, updates the model weights, and saves the progress.
+        """
         try:
             self.__setup__()
         except Exception as e:
@@ -201,6 +294,12 @@ class Trainer:
 
     @staticmethod
     def plot_loss_curves():
+        """
+        Plots the training and testing loss curves. Requires the metrics to be saved in a specified path.
+
+        Raises:
+            Exception: If the metrics path is not found.
+        """
         if os.path.exists(METRICS_PATH):
             history = load(filename=os.path.join(METRICS_PATH, "metrics.pkl"))
             plt.figure(figsize=(15, 10))
