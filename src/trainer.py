@@ -2,9 +2,11 @@ import sys
 import os
 import logging
 import argparse
+from tqdm import tqdm
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
-import torch.optim as optim
+from torchvision.utils import save_image
 
 sys.path.append("src/")
 
@@ -13,9 +15,11 @@ from config import (
     TRAIN_CHECKPOINT_PATH,
     TEST_CHECKPOINT_PATH,
     TRAIN_IMAGES_PATH,
+    METRICS_PATH,
 )
 from utils import load, dump, weight_init, define_device
 from UNet import UNet
+from dice_loss import DiceLoss
 
 
 class Trainer:
@@ -212,3 +216,47 @@ class Trainer:
             plt.show()
         else:
             raise Exception("Metrics path not found.".capitalize())
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Trainer".title())
+    parser.add_argument(
+        "--epochs", type=int, default=100, help="Number of epochs".capitalize()
+    )
+    parser.add_argument(
+        "--lr", type=float, default=1e-2, help="Learning rate".capitalize()
+    )
+    parser.add_argument(
+        "--loss", type=str, default="dice", help="Loss function".capitalize()
+    )
+    parser.add_argument(
+        "--display", type=bool, default=True, help="Display progress".capitalize()
+    )
+    parser.add_argument("--device", type=str, default="mps", help="Device".capitalize())
+    parser.add_argument(
+        "--smooth_value", type=float, default=0.01, help="Smooth value".capitalize()
+    )
+    parser.add_argument("--train", action="store_true", help="Train model".capitalize())
+
+    args = parser.parse_args()
+
+    if args.train:
+        if (
+            args.epochs
+            and args.lr
+            and args.loss
+            and args.display
+            and args.device
+            and args.smooth_value
+        ):
+            trainer = Trainer(
+                epochs=2,
+                lr=1e-2,
+                loss="dice",
+                display=True,
+                device="mps",
+                smooth_value=0.01,
+            )
+            trainer.train()
+    else:
+        raise Exception("Train flag is not set.".capitalize())
