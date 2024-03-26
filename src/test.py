@@ -27,17 +27,84 @@ from UNet import UNet
 
 
 class Charts:
+    """
+    A class responsible for visualizing model performance through charts and generating GIFs of training progress.
+
+    | Attribute | Type   | Description                                  |
+    |-----------|--------|----------------------------------------------|
+    | device    | str    | The device on which to perform computations. |
+
+    ## Methods
+
+    - `__init__(self, device="mps")`
+        Initializes the Charts object with a specified computing device.
+
+    - `select_best_model(self)`
+        Selects the best model based on saved checkpoints.
+
+    - `obtain_dataloader(self)`
+        Loads the test dataset.
+
+    - `data_normalized(self, **kwargs)`
+        Normalizes the data to be plotted.
+
+    - `plot_data_comparison(self)`
+        Plots a comparison between original images, their masks, and the predicted masks.
+
+    - `generate_gif(self)`
+        Generates a GIF from training images to visualize progress.
+
+    - `test(self)`
+        Executes the test phase, including model evaluation and visualization.
+
+    ## Examples
+
+    ```python
+    charts = Charts(device="cuda")
+    charts.test()
+    ```
+    """
+
     def __init__(self, device="mps"):
+        """
+        Initializes the Charts object.
+
+        | Parameter | Type | Default | Description                                   |
+        |-----------|------|---------|-----------------------------------------------|
+        | device    | str  | "mps"   | The device on which to perform computations.  |
+        """
         self.device = define_device(device=device)
         ignore_warnings()
 
     def select_best_model(self):
+        """
+        Selects and loads the best performing model based on saved checkpoints.
+
+        | Returns  | Type             | Description                              |
+        |----------|------------------|------------------------------------------|
+        | model    | torch.nn.Module  | The loaded PyTorch model in evaluation mode. |
+
+        | Raises   |
+        |----------|
+        | Exception| If the best model is not found.                              |
+        """
         if os.path.exists(BEST_MODEL_PATH):
             return torch.load(os.path.join(BEST_MODEL_PATH, "best_model.pth"))
         else:
             raise Exception("Best model not found.".capitalize())
 
     def obtain_dataloader(self):
+        """
+        Loads the test dataloader from the processed data path.
+
+        | Returns  | Type                        | Description                   |
+        |----------|-----------------------------|-------------------------------|
+        | dataloader | torch.utils.data.DataLoader | The test dataset dataloader. |
+
+        | Raises   |
+        |----------|
+        | Exception| If the processed data is not found.                         |
+        """
         if os.path.exists(PROCESSED_PATH):
             return load(os.path.join(PROCESSED_PATH, "test_dataloader.pkl"))
         else:
@@ -46,11 +113,29 @@ class Charts:
             )
 
     def data_normalized(self, **kwargs):
+        """
+        Normalizes input data to a range of [0, 1].
+
+        | Parameters | Type          | Description                            |
+        |------------|---------------|----------------------------------------|
+        | **kwargs   | dict          | Keyword arguments including 'data', a torch.Tensor to normalize. |
+
+        | Returns    | Type          | Description                            |
+        |------------|---------------|----------------------------------------|
+        | normalized_data | torch.Tensor | The normalized data tensor.           |
+        """
         return (kwargs["data"] - kwargs["data"].min()) / (
             kwargs["data"].max() - kwargs["data"].min()
         )
 
     def plot_data_comparison(self):
+        """
+        Plots and saves a comparison between original images, their masks, and the predicted masks by the model.
+
+        | Raises    |
+        |-----------|
+        | Exception | If there is an issue saving the plot.                        |
+        """
         plt.figure(figsize=(40, 35))
 
         images, original_masks = next(iter(self.obtain_dataloader()))
@@ -92,6 +177,13 @@ class Charts:
             plt.show()
 
     def generate_gif(self):
+        """
+        Generates a GIF from saved training images to visualize the training progress.
+
+        | Raises    |
+        |-----------|
+        | Exception | If the training images path is not found.                    |
+        """
         if os.path.exists(TRAIN_IMAGES_PATH) and os.path.exists(GIF_PATH):
             images = [
                 imageio.imread(os.path.join(TRAIN_IMAGES_PATH, image))
@@ -102,6 +194,13 @@ class Charts:
             raise Exception("Train images path not found.".capitalize())
 
     def test(self):
+        """
+        Conducts the test by evaluating the model and generating visualizations of its performance.
+
+        | Raises    |
+        |-----------|
+        | Exception | If there is an exception during the test phase.               |
+        """
         self.model = UNet().to(self.device)
         try:
             self.model.load_state_dict(self.select_best_model())
