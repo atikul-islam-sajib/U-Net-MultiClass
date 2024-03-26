@@ -102,7 +102,7 @@ class Loader:
         """
         return transforms.Compose(
             [
-                transforms.Resize((256, 256)),
+                transforms.Resize((self.image_size, self.image_size)),
                 transforms.ToTensor(),
                 transforms.Grayscale(num_output_channels=1),
                 transforms.Normalize([0.5], [0.5]),
@@ -228,7 +228,7 @@ class Loader:
 
         if os.path.exists(PROCESSED_PATH):
             val_images, val_masks = next(
-                iter(load(filename="../../data/processed/test_dataloader.pkl"))
+                iter(load(filename=os.path.join(PROCESSED_PATH, "test_dataloader.pkl")))
             )
 
             plt.figure(figsize=(30, 20))
@@ -286,15 +286,20 @@ if __name__ == "__main__":
         default=0.25,
         help="Split the dataset into train and test sets".capitalize(),
     )
+    parser.add_argument(
+        "--image_size", type=int, default=128, help="Image size".capitalize()
+    )
+
     args = parser.parse_args()
 
-    if args.image_path and args.batch_size and args.split_ratio:
+    if args.image_path and args.batch_size and args.split_ratio and args.image_size:
         logging.info("Data Loader started".capitalize())
 
         loader = Loader(
             image_path=args.image_path,
             batch_size=args.batch_size,
             split_ratio=args.split_ratio,
+            image_size=args.image_size,
         )
         loader.unzip_folder()
         loader.create_dataloader()
