@@ -20,6 +20,7 @@ from config import (
 from utils import load, dump, weight_init, define_device
 from UNet import UNet
 from dice_loss import DiceLoss
+from tversky_loss import IoU
 
 
 class Trainer:
@@ -102,6 +103,12 @@ class Trainer:
         """
         if self.loss == "dice":
             return DiceLoss(smooth=0.01)
+        elif self.loss == "IoU":
+            return IoU(smooth=self.smooth_value)
+        else:
+            raise ValueError(
+                "Loss function not supported. Please choose from 'dice' or 'IoU'.".capitalize()
+            )
 
     def l1_loss(self, model, lambda_value=0.01):
         """
@@ -349,12 +356,12 @@ if __name__ == "__main__":
             and args.smooth_value
         ):
             trainer = Trainer(
-                epochs=2,
-                lr=1e-2,
-                loss="dice",
-                display=True,
-                device="mps",
-                smooth_value=0.01,
+                epochs=args.epochs,
+                lr=args.lr,
+                loss=args.loss,
+                display=args.display,
+                device=args.device,
+                smooth_value=args.smooth_value,
             )
             trainer.train()
     else:
