@@ -14,19 +14,69 @@ logging.basicConfig(
 
 
 class JaccardLoss(nn.Module):
+    """
+    Implements the Jaccard Loss, also known as the Intersection over Union (IoU) loss. This loss function measures the similarity between the predicted and actual values, and is particularly useful for segmentation tasks. The Jaccard index is calculated as the size of the intersection divided by the size of the union of the two label sets.
+
+    | Attribute | Type  | Description                                       |
+    |-----------|-------|---------------------------------------------------|
+    | smooth    | float | A small constant added to avoid division by zero. |
+
+    ## Methods
+
+    - `__init__(self, smooth=1e-6)`
+        Initializes the JaccardLoss object with a smoothing factor.
+
+    - `forward(self, predicted, actual)`
+        Computes the Jaccard loss for the given predictions and actual values.
+
+    ## Examples
+
+    ```python
+    jaccard_loss = JaccardLoss(smooth=1e-6)
+    predicted = torch.sigmoid(torch.randn(10, 1, requires_grad=True))
+    actual = torch.empty(10, 1).random_(2)
+    loss = jaccard_loss(predicted, actual)
+    print(f"Jaccard Loss: {loss.item()}")
+    ```
+
+    Note: The predicted values should be probabilities obtained after applying the sigmoid or softmax function, and actual values should be binary (0 or 1) for the calculation to be meaningful.
+    """
+
     def __init__(self, smooth=1e-6):
+        """
+        Initializes the JaccardLoss function with a specified smoothing value to avoid division by zero.
+
+        | Parameter | Type  | Default | Description                                 |
+        |-----------|-------|---------|---------------------------------------------|
+        | smooth    | float | 1e-6    | A small constant added for numerical stability. |
+        """
         super(JaccardLoss, self).__init__()
         self.smooth = smooth
 
     def forward(self, predicted, actual):
+        """
+        Computes the Jaccard Loss between predicted and actual outcomes.
+
+        | Parameters | Type          | Description                                                        |
+        |------------|---------------|--------------------------------------------------------------------|
+        | predicted  | torch.Tensor  | Predicted outputs by the model. Must be of shape (N, *) where N is the batch size. |
+        | actual     | torch.Tensor  | Ground truth values. Must be the same shape as predicted.          |
+
+        | Returns    | Type          | Description                                                        |
+        |------------|---------------|--------------------------------------------------------------------|
+        | loss       | torch.Tensor  | The calculated Jaccard loss.                                       |
+        """
         predicted = predicted.view(-1)
         actual = actual.view(-1)
 
-        TP = (predicted * actual).sum()
-        FP = ((1 - predicted) * actual).sum()
-        FN = (predicted * (1 - actual)).sum()
+        true_positives = (predicted * actual).sum()
+        false_positives = ((1 - predicted) * actual).sum()
+        false_negatives = (predicted * (1 - actual)).sum()
 
-        return 1 - ((TP + self.smooth) / (TP + FP + FN + self.smooth))
+        jaccard_index = (true_positives + self.smooth) / (
+            true_positives + false_positives + false_negatives + self.smooth
+        )
+        return 1 - jaccard_index
 
 
 if __name__ == "__main__":
