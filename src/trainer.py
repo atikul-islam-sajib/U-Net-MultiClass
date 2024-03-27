@@ -25,6 +25,7 @@ from tversky_loss import IoU
 from focal_loss import FocalLoss
 from dice_bce import DiceBCE
 from jaccard_loss import JaccardLoss
+from combined_loss import ComboLoss
 
 
 class Trainer:
@@ -139,6 +140,10 @@ class Trainer:
             return DiceBCE(smooth=self.smooth_value)
         elif self.loss == "jaccard":
             return JaccardLoss(smooth=self.smooth_value)
+        elif self.loss == "combo":
+            return ComboLoss(
+                alpha=self.alpha, gamma=self.gamma, smooth=self.smooth_value
+            )
         else:
             print(self.loss)
             return nn.BCELoss(reduction="mean")
