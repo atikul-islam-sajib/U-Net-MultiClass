@@ -6,6 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import torch.nn as nn
 from torchvision.utils import save_image
 
 sys.path.append("src/")
@@ -103,10 +104,31 @@ class Trainer:
 
     def select_loss_function(self):
         """
-        Selects and returns the loss function based on the loss type specified during initialization.
+        Selects and returns the appropriate loss function based on the specified loss type during the initialization of the class. This method enables flexible switching between different loss functions for training, depending on the model's requirements and the specific task at hand.
+
+        The method supports various loss types, including 'dice', 'IoU' (Intersection over Union), 'focal', 'dice_bce' (a combination of Dice and Binary Cross-Entropy Loss), 'jaccard', and falls back to standard Binary Cross-Entropy Loss if none of these are specified.
 
         Returns:
-            nn.Module: The loss function as a PyTorch module.
+            nn.Module: The selected loss function as a PyTorch module. The specific loss function returned depends on the 'loss' attribute defined during the initialization of the class.
+
+        Supported loss types and their corresponding returned loss functions:
+        - 'dice': Returns an instance of the `DiceLoss` class.
+        - 'IoU': Returns an instance of the `IoU` class.
+        - 'focal': Returns an instance of the `FocalLoss` class, with `alpha` and `gamma` parameters.
+        - 'dice_bce': Returns an instance of the `DiceBCE` class.
+        - 'jaccard': Returns an instance of the `JaccardLoss` class.
+        - Otherwise: Returns an instance of the `nn.BCELoss` class with `reduction` set to "mean".
+
+        Examples:
+        ```python
+        # Assuming 'self.loss' is set to "dice" and 'self.smooth_value' is defined
+        loss_function = self.select_loss_function()
+        # `loss_function` is now an instance of `DiceLoss`
+
+        # If 'self.loss' is set to "focal", with 'self.alpha' and 'self.gamma' defined
+        loss_function = self.select_loss_function()
+        # `loss_function` is now an instance of `FocalLoss`
+        ```
         """
         if self.loss == "dice":
             return DiceLoss(smooth=self.smooth_value)
@@ -119,9 +141,7 @@ class Trainer:
         elif self.loss == "jaccard":
             return JaccardLoss(smooth=self.smooth_value)
         else:
-            raise ValueError(
-                "Loss function not supported. Please choose from 'dice' or 'IoU'.".capitalize()
-            )
+            return nn.BCELoss(reduction="mean")
 
     def l1_loss(self, model, lambda_value=0.01):
         """
@@ -242,8 +262,30 @@ class Trainer:
 
     def train(self):
         """
-        The main method for training the model. It sets up the model, iterates over the dataset
-        for a given number of epochs, updates the model weights, and saves the progress.
+        Executes the training loop for the model over a specified number of epochs. This method performs several key functions:
+
+        - Calls the setup method to prepare the model, optimizer, and data loaders.
+        - Iterates over the training and testing datasets for each epoch to compute loss and update model parameters.
+        - Saves model checkpoints at each epoch and the best model at the end of training.
+        - Updates the training history with loss metrics for visualization.
+        - Optionally saves images of predicted masks for visual inspection.
+
+        The training process can be interrupted by exceptions related to file paths or IO operations. These are caught and reported to allow for troubleshooting.
+
+        Raises:
+            Exception: If the setup process (`__setup__`) fails, indicating issues with data loading or model initialization.
+            Exception: If saving checkpoints or metrics fails due to issues with the file path or writing permissions.
+            Exception: If there's an issue saving the training progress images, indicating a problem with the specified path.
+
+        Note:
+            This method updates the model's weights and records the training and testing loss in the `history` attribute.
+            It also saves checkpoints and training images to the filesystem for later analysis or resumption of training.
+
+        Examples:
+            ```python
+            trainer = Trainer(...)
+            trainer.train()  # Starts the training process
+            ```
         """
         try:
             self.__setup__()
