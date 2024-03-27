@@ -313,3 +313,25 @@ from src.test import Charts
 charts = Charts(device="mps")  # Specify the device used for testing
 charts.test()
 ```
+
+#### 5. Visualize Results
+
+Visualize the test results and the loss curves by displaying the generated images. Ensure you specify the correct paths to the images.
+
+```python
+from IPython.display import Image
+
+# Display the result image
+Image("/content/U-Net/outputs/test_images/result.png")
+
+# Display the loss curve image
+Image("/content/U-Net/outputs/test_images/loss.png")
+```
+
+## Contributing
+
+Contributions to improve this implementation of U-Net are welcome. Please follow the standard fork-branch-pull request workflow.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
