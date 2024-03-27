@@ -75,7 +75,7 @@ class ComboLoss(nn.Module):
 
         FocalLoss = self.alpha * (1 - pt) ** self.gamma * BCELoss
 
-        return (BCELoss + DiceLoss) / 2 + FocalLoss
+        return BCELoss + FocalLoss + DiceLoss
 
 
 if __name__ == "__main__":
