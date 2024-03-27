@@ -137,29 +137,179 @@ segmentation/
 
 For detailed documentation on the dataset visit the [Dataset - Kaggle](https://www.kaggle.com/datasets/mehradaria/leukemia).
 
-## Detailed Documentation Links
+### Documentation U-Net
 
-| Component      | Documentation Link                   |
-| -------------- | ------------------------------------ |
-| DataLoader     | [DataLoader](./dataloader.md)        |
-| Encoder        | [Encoder](./encoder.md)              |
-| Decoder        | [Decoder](./decoder.md)              |
-| U-Net          | [U-Net](./UNet.md)                   |
-| DiceLoss       | [DiceLoss](./DiceLoss.md)            |
-| FocalLoss      | [FocalLoss](./FocalLoss.md)          |
-| JaccardLoss    | [JaccardLoss](./JaccardLoss.md)      |
-| TverskyLoss    | [TverskyLoss](./TverskyLoss.md)      |
-| DiceBCELoss    | [DiceBCELoss](./DiceBCELoss.md)      |
-| ComboLoss      | [ComboLoss](./ComboLoss.md)          |
-| Trainer        | [Trainer](./trainer.md)              |
-| Charts         | [Charts](./Charts.md)                |
-| CLI            | [CLI](./CLI.md)                      |
-| Custom Modules | [Custom Modules](./CustomModules.md) |
+For detailed documentation on the implementation and usage, visit the -> [U-Net Documentation](https://atikul-islam-sajib.github.io/U-Net-MultiClass-Deploy/).
 
-## Contributing
+### User's guidance Notebook for U-Net
 
-Contributions to improve this implementation of U-Net are welcome. Please follow the standard fork-branch-pull request workflow.
+For detailed implementation and usage - CLI, visit the -> [U-Net: CLI Notebook](./research/notebooks/ModelTraining-CLI.ipynb).
 
-## License
+For detailed implementation and usage - Custom Modules, visit the -> [U-Net: Custom Modules Notebook](./research/notebooks/ModelTraining-Modules.ipynb).
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+# Command Line Usage
+
+```
+python cli.py [--image_path PATH] [--batch_size SIZE] [--split_ratio RATIO] [--image_size SIZE] [--epochs EPOCHS] [--lr LEARNING_RATE] [--loss LOSS] [--display DISPLAY] [--device DEVICE] [--smooth_value VALUE] [--alpha ALPHA] [--gamma GAMMA] [--train] [--test]
+```
+
+### CLI - Arguments
+
+| Argument         | Type    | Default | Description                                                        |
+| ---------------- | ------- | ------- | ------------------------------------------------------------------ |
+| `--image_path`   | `str`   | None    | Path to the zip file containing the images.                        |
+| `--batch_size`   | `int`   | 4       | Batch size for the DataLoader.                                     |
+| `--split_ratio`  | `float` | 0.25    | Ratio to split the dataset into train and test sets.               |
+| `--image_size`   | `int`   | 128     | Size of the images.                                                |
+| `--epochs`       | `int`   | 100     | Number of epochs to train.                                         |
+| `--lr`           | `float` | 1e-2    | Learning rate.                                                     |
+| `--loss`         | `str`   | "dice"  | Loss function to use.                                              |
+| `--display`      | `bool`  | True    | Whether to display progress during training.                       |
+| `--device`       | `str`   | "mps"   | Device to use for training/testing. Options: "cpu", "cuda", "mps". |
+| `--smooth_value` | `float` | 0.01    | Smooth value for loss calculation.                                 |
+| `--alpha`        | `float` | 0.5     | Alpha value for loss calculation.                                  |
+| `--gamma`        | `float` | 2       | Gamma value for loss calculation.                                  |
+| `--train`        | Action  | False   | Flag to initiate training process.                                 |
+| `--test`         | Action  | False   | Flag to initiate testing process.                                  |
+
+### Supported Loss Functions
+
+The CLI tool supports various loss functions, each with specific parameters for fine-tuning the training process.
+
+| Loss Function | Parameters                             | Description                                                                              |
+| ------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `DiceLoss`    | `smooth=0.01`                          | Dice loss function with a smooth value to avoid division by zero.                        |
+| `DiceBCELoss` | `smooth=0.01`                          | Combination of Dice and Binary Cross-Entropy (BCE) losses.                               |
+| `FocalLoss`   | `alpha=0.25`, `gamma=2`                | Focal loss function, useful for unbalanced classes. Alpha and Gamma are hyperparameters. |
+| `TverskyLoss` | `smooth=0.01`                          | Tversky loss function, a generalization of Dice loss.                                    |
+| `JaccardLoss` | `smooth=0.01`                          | Jaccard loss function, a generalization of Dice loss.                                    |
+| `ComboLoss`   | `smooth=0.01`, `alpha=0.25`, `gamma=2` | Combo loss function, a generalization of Dice loss, FocalLoss and BCELoss                |
+
+### Training and Testing
+
+#### Training the Model
+
+To train the model, you need a dataset in a zip file specified by `--image_path`, along with any other configurations you wish to customize.
+
+- **Using CUDA (for NVIDIA GPUs):**
+
+```
+python cli.py --image_path "/path/to/dataset.zip" --batch_size 4 --image_size 128 --split_ratio 0.25 --epochs 50 --lr 0.001 --loss dice --display True --smooth_value 0.01 --alpha 0.25 --gamma 2 --device cuda --train
+```
+
+- **Using MPS (for Apple Silicon GPUs):**
+
+```
+python cli.py --image_path "/path/to/dataset.zip" --batch_size 4 --image_size 128 --split_ratio 0.25 --epochs 50 --lr 0.001 --loss dice --display True --smooth_value 0.01 --alpha 0.25 --gamma 2  --device mps --train
+```
+
+- **Using CPU:**
+
+```
+python cli.py --image_path "/path/to/dataset.zip" --batch_size 4 --image_size 128 --split_ratio 0.25 --epochs 50 --lr 0.001 --loss dice --display True --smooth_value 0.01 --alpha 0.25 --gamma 2 --device cpu --train
+```
+
+#### Testing the Model
+
+Ensure you specify the device using `--device` if different from the default. The test process can be initiated with the `--test` flag.
+
+- **Using CUDA (for NVIDIA GPUs):**
+
+```
+python cli.py --device cuda --test
+```
+
+- **Using MPS (for Apple Silicon GPUs):**
+
+```
+python cli.py --device mps --test
+```
+
+- **Using CPU:**
+
+```
+python cli.py --device cpu --test
+```
+
+#### Import Custom Modules
+
+First, ensure that you have the necessary modules available in your Python environment. These modules include functionalities for data loading, model definition, training, and evaluation.
+
+```python
+from src.dataloader import Loader
+from src.UNet import UNet
+from src.trainer import Trainer
+from src.test import Charts
+```
+
+## DataLoader
+
+The `Loader` class is responsible for preparing the dataset. It unzips the dataset, splits it into training and testing sets based on the provided ratio, and creates DataLoaders for both.
+
+To use the DataLoader, ensure you have your dataset in a zip file. Specify the path to this file along with other parameters such as batch size, split ratio, and image size.
+
+Example:
+
+```python
+from src.dataloader import Loader
+
+loader = Loader(
+    image_path="path/to/your/dataset.zip",
+    batch_size=4,
+    split_ratio=0.25,
+    image_size=128
+)
+loader.unzip_folder()
+loader.create_dataloader()
+```
+
+### Loss Functions
+
+The training process supports several loss functions, allowing you to choose the one that best fits your project's needs. Below is a table describing the available loss functions and how to specify each in the training command or configuration.
+
+| Loss Function | Call              | Description                                                                                                                                                      |
+| ------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dice          | `loss="dice"`     | Measures the overlap between the predicted segmentation and the ground truth. Ideal for binary segmentation tasks.                                               |
+| Jaccard       | `loss="jaccard"`  | Also known as the Intersection over Union (IoU) loss. Similar to Dice but with a different formula. Good for evaluating the accuracy of object detection models. |
+| IoU           | `loss="IoU"`      | Another name for Jaccard loss.                                                                                                                                   |
+| Combo         | `loss="combo"`    | Combines Dice and a cross-entropy loss to leverage the benefits of both. Useful for unbalanced datasets.                                                         |
+| Focal         | `loss="focal"`    | Focuses on hard-to-classify examples by reducing the relative loss for well-classified examples. Useful for datasets with imbalanced classes.                    |
+| Dice_BCE      | `loss="dice_bce"` | A combination of Dice and Binary Cross-Entropy (BCE) losses. Offers a balance between shape similarity and pixel-wise accuracy.                                  |
+| None          | `loss=None`       | IT will trigger the BCELoss                                                                                                                                      |
+
+### Trainer
+
+The `Trainer` class manages the training process, including setting up the loss function, optimizer, and device (CPU, CUDA, MPS). It also handles the training epochs and displays progress if enabled.
+
+To train your model, configure the `Trainer` with your desired settings.
+
+Example:
+
+```python
+from src.trainer import Trainer
+
+trainer = Trainer(
+    epochs=100,
+    lr=0.01,
+    loss="dice", # can be "jaccard", "IoU", "combo", "focal", "dice_bce", "None"
+    alpha=0.5,
+    gamma=2,
+    display=True,
+    device="cuda",  # Can be "cpu", "cuda", or "mps"
+    smooth_value=0.01
+)
+trainer.train()
+```
+
+### Charts
+
+After training, you can test and visualize the model's performance using the `Charts` class. This class allows you to evaluate the trained model on the test dataset and generate performance metrics.
+
+Example:
+
+```python
+from src.test import Charts
+
+charts = Charts(device="mps")  # Specify the device used for testing
+charts.test()
+```
