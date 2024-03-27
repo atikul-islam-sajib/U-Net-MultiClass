@@ -62,7 +62,7 @@ class Trainer:
         self,
         epochs=10,
         lr=0.0002,
-        loss="dice",
+        loss=None,
         alpha=0.25,
         gamma=2,
         smooth_value=0.01,
@@ -78,7 +78,6 @@ class Trainer:
         self.smooth_value = smooth_value
         self.beta1 = beta1
         self.beta2 = 0.999
-        self.weight_decay = 1e-4
         self.device = device
         self.is_display = display
         self.history = {"train_loss": list(), "test_loss": list()}
@@ -141,6 +140,7 @@ class Trainer:
         elif self.loss == "jaccard":
             return JaccardLoss(smooth=self.smooth_value)
         else:
+            print(self.loss)
             return nn.BCELoss(reduction="mean")
 
     def l1_loss(self, model, lambda_value=0.01):
