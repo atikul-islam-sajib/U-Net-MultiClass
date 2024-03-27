@@ -23,6 +23,7 @@ from dice_loss import DiceLoss
 from tversky_loss import IoU
 from focal_loss import FocalLoss
 from dice_bce import DiceBCE
+from jaccard_loss import JaccardLoss
 
 
 class Trainer:
@@ -108,13 +109,15 @@ class Trainer:
             nn.Module: The loss function as a PyTorch module.
         """
         if self.loss == "dice":
-            return DiceLoss(smooth=0.01)
+            return DiceLoss(smooth=self.smooth_value)
         elif self.loss == "IoU":
             return IoU(smooth=self.smooth_value)
         elif self.loss == "focal":
             return FocalLoss(alpha=self.alpha, gamma=self.gamma)
         elif self.loss == "dice_bce":
             return DiceBCE(smooth=self.smooth_value)
+        elif self.loss == "jaccard":
+            return JaccardLoss(smooth=self.smooth_value)
         else:
             raise ValueError(
                 "Loss function not supported. Please choose from 'dice' or 'IoU'.".capitalize()
